@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
         "os"
 	"strconv"
         "strings"
@@ -25,9 +24,6 @@ type authenticator struct {
 
 func (a *authenticator) SetAuthHeaders(headers map[string]string, now time.Time, method string, path string, body []byte) {
 	timestamp := strconv.FormatInt(now.UnixNano(), 10)
-
-log.Printf("%v %v %v %v", timestamp, method, path, string(body))
-
 	mac := hmac.New(sha256.New, []byte(a.apiSecret))
 	mac.Write([]byte(timestamp))
 	mac.Write([]byte(method))

@@ -1,7 +1,6 @@
 package client
 
 import (
-	"log"
 	"fmt"
 	"bytes"
 	"time"
@@ -107,7 +106,6 @@ func (c *HTTPClient) newClient(scheme string, host string) (*http.Client) {
 }
 
 func (c *HTTPClient) DoRequest(request *HTTPRequest) (*http.Response, []byte, error) {
-log.Printf("%v %v %v", request.Method, request.URL, string(request.Body))
 	parsedURL, err := url.Parse(request.URL)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "can not parse url (url = %v)", request.URL)
@@ -119,7 +117,6 @@ log.Printf("%v %v %v", request.Method, request.URL, string(request.Body))
 	}
 	if request.Headers != nil {
 		for k, v := range request.Headers {
-log.Printf("%v: %v", k, v)
 			req.Header.Set(k, v)
 		}
 	}
