@@ -261,7 +261,7 @@ func TestPriGetChildOrders(t *testing.T) {
 	}
 	t.Log(fmt.Sprintf("%#v\n%#v", httpResponse, sendChildOrderResponse))
 
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	httpResponse, getChildOrdersResponse, err := apiClient.PriGetChildOrders("BTC_JPY", 10, 0, 0, types.OrderStateActive)
 	if err != nil {
@@ -305,7 +305,7 @@ func TestPriGetChildOrders(t *testing.T) {
 	}
 	t.Log(fmt.Sprintf("%#v", httpResponse))
 
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	httpResponse, getChildOrdersResponse, err = apiClient.PriGetChildOrders("BTC_JPY", 10, 0, 0, types.OrderStateActive)
 	if err != nil {
@@ -515,7 +515,7 @@ func TestPriGetParentOrders(t *testing.T) {
 	}
 	t.Log(fmt.Sprintf("%#v\n%#v", httpResponse, sendParentOrderResponse))
 
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	httpResponse, getParentOrdersResponse, err := apiClient.PriGetParentOrders("BTC_JPY", 10, 0, 0, types.OrderStateActive)
 	if err != nil {
@@ -550,7 +550,7 @@ func TestPriGetParentOrders(t *testing.T) {
 		t.Errorf("no order")
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	httpResponse, err = apiClient.PriCancelParentOrder("BTC_JPY", types.IdTypeParentOrderId, parentOrderId)
 	if err != nil {
@@ -591,7 +591,7 @@ func TestPriGetParentOrder(t *testing.T) {
 	}
 	t.Log(fmt.Sprintf("%#v\n%#v", httpResponse, sendParentOrderResponse))
 
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 
 	httpResponse, getParentOrderResponse, err := apiClient.PriGetParentOrder(types.IdTypeParentOrderAcceptanceId, sendParentOrderResponse.ParentOrderAcceptanceId)
 	if err != nil {
@@ -621,7 +621,7 @@ func TestPriGetParentOrder(t *testing.T) {
 	t.Log(fmt.Sprintf("%#v", httpResponse))
 	t.Log(fmt.Sprintf("%#v", getParentOrderResponse))
 
-	time.Sleep(time.Second)
+	time.Sleep(2 *time.Second)
 
 	httpResponse, err = apiClient.PriCancelParentOrder("BTC_JPY", types.IdTypeParentOrderId, parentOrderId)
 	if err != nil {
