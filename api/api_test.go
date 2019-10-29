@@ -633,12 +633,13 @@ func TestPriGetParentOrder(t *testing.T) {
 	t.Log(fmt.Sprintf("%#v", httpResponse))
 }
 
+
 type testCallbackData struct {
 	t *testing.T
 	m string
 }
 
-func tickerCallback(getTickerResponse *public.GetTickerResponse, callbackData interface{}) {
+func tickerCallback(productCode types.ProductCode, getTickerResponse *public.GetTickerResponse, callbackData interface{}) {
 	tcbd := (callbackData).(*testCallbackData)
 	if tcbd.m != "test" {
 		 tcbd.t.Errorf("mismatch message")
@@ -666,7 +667,7 @@ func TestRealSubscribeTicker(t *testing.T) {
 
 }
 
-func boardSnapshotCallback(getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
+func boardSnapshotCallback(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
 	tcbd := (callbackData).(*testCallbackData)
 	if tcbd.m != "test" {
 		 tcbd.t.Errorf("mismatch message")
@@ -691,5 +692,58 @@ func TestRealSubscribeBoardSnapshot(t *testing.T) {
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
+}
 
+func boardCallback(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
+	tcbd := (callbackData).(*testCallbackData)
+	if tcbd.m != "test" {
+		 tcbd.t.Errorf("mismatch message")
+	}
+	log.Printf("%#v", getBoardResponse)
+}
+
+func TestRealSubscribeBoard(t *testing.T) {
+	apiClient := createApiClient(t)
+	tcbd := &testCallbackData{
+		t: t,
+		m: "test",
+	}
+	err := apiClient.RealBoardStart("BTC_JPY", boardCallback, tcbd)
+	if err != nil {
+		t.Errorf("error: %v", err)
+	}
+
+	time.Sleep(20 * time.Second)
+
+	err = apiClient.RealBoardStop("BTC_JPY")
+	if err != nil {
+		t.Errorf("error: %v", err)
+	}
+}
+
+func executionsCallback(productCode types.ProductCode, getExecutionsResponse public.GetExecutionsResponse, callbackData interface{}) {
+	tcbd := (callbackData).(*testCallbackData)
+	if tcbd.m != "test" {
+		 tcbd.t.Errorf("mismatch message")
+	}
+	log.Printf("%#v", getExecutionsResponse)
+}
+
+func TestRealSubscribeExecutions(t *testing.T) {
+	apiClient := createApiClient(t)
+	tcbd := &testCallbackData{
+		t: t,
+		m: "test",
+	}
+	err := apiClient.RealExecutionsStart("BTC_JPY", executionsCallback, tcbd)
+	if err != nil {
+		t.Errorf("error: %v", err)
+	}
+
+	time.Sleep(20 * time.Second)
+
+	err = apiClient.RealExecutionsStop("BTC_JPY")
+	if err != nil {
+		t.Errorf("error: %v", err)
+	}
 }

@@ -5,12 +5,17 @@ import (
 	"os"
         "time"
         "github.com/potix/gobitflyer/client"
+        "github.com/potix/gobitflyer/api/types"
         "github.com/potix/gobitflyer/api/public"
         "github.com/potix/gobitflyer/api"
 )
 
-func realtimeTickerCallback(getTickerResponse *public.GetTickerResponse, callbackData interface{}) {
-        log.Printf("%#v", getTickerResponse)
+func realtimeTickerCallback(productCode types.ProductCode, getTickerResponse *public.GetTickerResponse, callbackData interface{}) {
+        log.Printf("ticker: (%v) %#v", productCode, getTickerResponse)
+}
+
+func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
+        log.Printf("board: (%v) %#v", productCode, getBoardResponse)
 }
 
 func main() {
@@ -50,10 +55,20 @@ func main() {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
+        err = apiClient.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil)
+        if err != nil {
+                log.Printf("error: %v", err)
+		os.Exit(1)
+        }
 
         time.Sleep(20 * time.Second)
 
         err = apiClient.RealTickerStop("BTC_JPY")
+        if err != nil {
+                log.Printf("error: %v", err)
+		os.Exit(1)
+        }
+        err = apiClient.RealBoardStop("BTC_JPY")
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
