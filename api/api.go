@@ -640,12 +640,15 @@ func (c *APIClient) RealTickerCallback(conn *websocket.Conn, calbackData interfa
 	}
 }
 
-func (c *APIClient) RealTickerStart(productCode types.ProductCode, callback realtime.TickerCallback, callbackData interface{}) (error){
+func (c *APIClient) RealTickerStart(wsClient *client.WSClient, productCode types.ProductCode, callback realtime.TickerCallback, callbackData interface{}) (error){
+	_, ok := c.realTickerChannels[productCode]
+	if ok {
+		return errors.Errorf("already exists realtime api connection")
+	}
 	wsRequest := &client.WSRequest {
 		URL: realtimeEndpoint,
 		Headers: make(map[string]string),
 	}
-	wsClient := client.NewWSClient(0, 0, 60, 1)
 	rc := &realtime.TickerChannel{
 		ProductCode:  productCode,
 		WsClient:     wsClient,
@@ -703,12 +706,15 @@ func (c *APIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackData 
 	}
 }
 
-func (c *APIClient) RealBoardSnapshotStart(productCode types.ProductCode, callback realtime.BoardSnapshotCallback, callbackData interface{}) (error){
+func (c *APIClient) RealBoardSnapshotStart(wsClient *client.WSClient, productCode types.ProductCode, callback realtime.BoardSnapshotCallback, callbackData interface{}) (error){
+	_, ok := c.realBoardSnapshotChannels[productCode]
+	if ok {
+		return errors.Errorf("already exists realtime api connection")
+	}
 	wsRequest := &client.WSRequest {
 		URL: realtimeEndpoint,
 		Headers: make(map[string]string),
 	}
-	wsClient := client.NewWSClient(0, 0, 60, 1)
 	rc := &realtime.BoardSnapshotChannel{
 		ProductCode:  productCode,
 		WsClient:     wsClient,
@@ -836,12 +842,15 @@ func (c *APIClient) RealBoardCallback(conn *websocket.Conn, calbackData interfac
 	}
 }
 
-func (c *APIClient) RealBoardStart(productCode types.ProductCode, callback realtime.BoardCallback, callbackData interface{}, merge bool) (error){
+func (c *APIClient) RealBoardStart(wsClient *client.WSClient, productCode types.ProductCode, callback realtime.BoardCallback, callbackData interface{}, merge bool) (error){
+	_, ok := c.realBoardChannels[productCode]
+	if ok {
+		return errors.Errorf("already exists realtime api connection")
+	}
 	wsRequest := &client.WSRequest {
 		URL: realtimeEndpoint,
 		Headers: make(map[string]string),
 	}
-	wsClient := client.NewWSClient(0, 0, 60, 1)
 	rc := &realtime.BoardChannel{
 		ProductCode:          productCode,
 		WsClient:             wsClient,
@@ -901,12 +910,15 @@ func (c *APIClient) RealExecutionsCallback(conn *websocket.Conn, calbackData int
 	}
 }
 
-func (c *APIClient) RealExecutionsStart(productCode types.ProductCode, callback realtime.ExecutionsCallback, callbackData interface{}) (error){
+func (c *APIClient) RealExecutionsStart(wsClient *client.WSClient, productCode types.ProductCode, callback realtime.ExecutionsCallback, callbackData interface{}) (error){
+	_, ok := c.realExecutionsChannels[productCode]
+	if ok {
+		return errors.Errorf("already exists realtime api connection")
+	}
 	wsRequest := &client.WSRequest {
 		URL: realtimeEndpoint,
 		Headers: make(map[string]string),
 	}
-	wsClient := client.NewWSClient(0, 0, 60, 1)
 	rc := &realtime.ExecutionsChannel{
 		WsClient:     wsClient,
 		Callback:     callback,

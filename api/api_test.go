@@ -653,7 +653,8 @@ func TestRealSubscribeTicker(t *testing.T) {
 		t: t,
 		m: "test",
 	}
-	err := apiClient.RealTickerStart("BTC_JPY", tickerCallback, tcbd)
+	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
+	err := apiClient.RealTickerStart(wsClinet, "BTC_JPY", tickerCallback, tcbd)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -681,7 +682,8 @@ func TestRealSubscribeBoardSnapshot(t *testing.T) {
 		t: t,
 		m: "test",
 	}
-	err := apiClient.RealBoardSnapshotStart("BTC_JPY", boardSnapshotCallback, tcbd)
+	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
+	err := apiClient.RealBoardSnapshotStart(wsClinet, "BTC_JPY", boardSnapshotCallback, tcbd)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -708,7 +710,8 @@ func TestRealSubscribeBoard(t *testing.T) {
 		t: t,
 		m: "test",
 	}
-	err := apiClient.RealBoardStart("BTC_JPY", boardCallback, tcbd, true)
+	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
+	err := apiClient.RealBoardStart(wsClinet, "BTC_JPY", boardCallback, tcbd, true)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -735,7 +738,8 @@ func TestRealSubscribeExecutions(t *testing.T) {
 		t: t,
 		m: "test",
 	}
-	err := apiClient.RealExecutionsStart("BTC_JPY", executionsCallback, tcbd)
+	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
+	err := apiClient.RealExecutionsStart(wsClinet, "BTC_JPY", executionsCallback, tcbd)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}

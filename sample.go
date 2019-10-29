@@ -86,18 +86,20 @@ func main() {
         log.Printf("Volume %v Volume By Product %v", getTickerResponse.Volume, getTickerResponse.VolumeByProduct)
 
 	// realtime api
-        err = apiClient.RealTickerStart("BTC_JPY", realtimeTickerCallback, nil)
+	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
+        err = apiClient.RealTickerStart(wsClinet, "BTC_JPY", realtimeTickerCallback, nil)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        err = apiClient.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil, true)
+	wsClinet = client.NewWSClient(0, 0, 3, 1, nil)
+        err = apiClient.RealBoardStart(wsClinet, "BTC_JPY", realtimeBoardCallback, nil, true)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
 
-        time.Sleep(30 * time.Second)
+        time.Sleep(20 * time.Second)
 
         err = apiClient.RealTickerStop("BTC_JPY")
         if err != nil {

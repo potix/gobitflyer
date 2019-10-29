@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 	"crypto/tls"
+	"net"
 	"net/http"
 	"net/url"
 	"sync/atomic"
@@ -21,7 +22,8 @@ type WSClient struct {
 	retry              int
 	retryMax           int
 	retryWait          int
-	finisable          uint32
+	localAddr          net.IP
+	started            uint32
 	finishRequestChan  chan int
 	finishResponseChan chan int
 }
@@ -39,7 +41,6 @@ type pingContext struct {
 }
 
 func (w *WSClient) messageLoop(conn *websocket.Conn, callback WSCallback, callbackData interface{}) (bool) {
-	atomic.StoreUint32(&w.finisable, 1)
 	for {
 		select {
 		case <- w.finishRequestChan:
@@ -127,6 +128,10 @@ func (w *WSClient) connectLoop(request *WSRequest, callback WSCallback, callback
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{ServerName: request.parsedURL.Host},
 	}
+	if w.localAddr != nil {
+		netDialer := &net.Dialer{LocalAddr: &net.TCPAddr{IP: w.localAddr}}
+		dialer.NetDialContext = netDialer.DialContext
+	}
 	for {
 		retryable := w.connect(request, callback, callbackData, header, dialer)
 		if retryable {
@@ -135,9 +140,14 @@ func (w *WSClient) connectLoop(request *WSRequest, callback WSCallback, callback
 		close(w.finishResponseChan)
 		break
 	}
+	atomic.StoreUint32(&w.started, 0)
 }
 
 func (w *WSClient) Start(request *WSRequest, callback WSCallback, callbackData interface{}) (error) {
+	if atomic.LoadUint32(&w.started) != 0 {
+		return errors.Errorf("already started (url = %v)", request.URL)
+	}
+	atomic.StoreUint32(&w.started, 1)
 	parsedURL, err := url.Parse(request.URL)
 	if err != nil {
 		return errors.Wrapf(err, "can not parse url (url = %v)", request.URL)
@@ -148,15 +158,15 @@ func (w *WSClient) Start(request *WSRequest, callback WSCallback, callbackData i
 }
 
 func (w *WSClient) Stop() {
-	if atomic.LoadUint32(&w.finisable) == 0 {
-		close(w.finishRequestChan)
+	if atomic.LoadUint32(&w.started) == 0 {
+		log.Printf("not started")
 		return
 	}
 	close(w.finishRequestChan)
 	<-w.finishResponseChan
 }
 
-func NewWSClient(readBufSize int, writeBufSize int, retryMax int, retryWait int) *WSClient {
+func NewWSClient(readBufSize int, writeBufSize int, retryMax int, retryWait int, localAddr net.IP) *WSClient {
 	if readBufSize == 0 {
 		readBufSize = 1024 * 1024 * 2
 	}
@@ -171,7 +181,8 @@ func NewWSClient(readBufSize int, writeBufSize int, retryMax int, retryWait int)
 		retry:                 0,
 		retryMax:              retryMax,
 		retryWait:             retryWait,
-		finisable:             0,
+		localAddr:             localAddr,
+		started:               0,
 		finishRequestChan:     make(chan int),
 		finishResponseChan:    make(chan int),
 	}
