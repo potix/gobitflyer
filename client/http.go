@@ -132,7 +132,7 @@ func (c *HTTPClient) DoRequest(request *HTTPRequest) (*http.Response, []byte, er
 	return res, resBody, nil
 }
 
-func NewHTTPClient(timeoutSec int, dnsCacheSec int, idleConnTimeout int, localAddr *net.IPAddr) (*HTTPClient) {
+func NewHTTPClient(timeoutSec int, dnsCacheSec int, idleConnTimeout int, localAddr net.IP) (*HTTPClient) {
 	if timeoutSec == 0 {
 		timeoutSec = 30
 	}
@@ -153,7 +153,7 @@ func NewHTTPClient(timeoutSec int, dnsCacheSec int, idleConnTimeout int, localAd
 	}
 	if localAddr != nil {
 		newHTTPClient.localAddr = &net.TCPAddr{
-			IP: localAddr.IP,
+			IP: localAddr,
 		}
 	}
 	return newHTTPClient
