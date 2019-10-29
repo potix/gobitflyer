@@ -2,6 +2,7 @@ package api
 
 import (
 	"time"
+	"sort"
 	"encoding/json"
 	"net/http"
 	"github.com/gorilla/websocket"
@@ -751,11 +752,15 @@ func (c *APIClient) RealBoardCallbackMerge(rc *realtime.BoardChannel, getBoardRe
 				}
 			}
 		} else  {
-			for i := 0; i < len(rc.GetBoardResponseFull.Asks); i+= 1 {
+			var i int
+			for i = 0; i < len(rc.GetBoardResponseFull.Asks); i+= 1 {
 				if rc.GetBoardResponseFull.Asks[i].Price == diffAsk.Price {
 					rc.GetBoardResponseFull.Asks[i].Size = diffAsk.Size
 					break
 				}
+			}
+			if i == len(rc.GetBoardResponseFull.Asks) {
+				rc.GetBoardResponseFull.Asks = append(rc.GetBoardResponseFull.Asks, diffAsk)
 			}
 		}
 	}
@@ -771,14 +776,24 @@ func (c *APIClient) RealBoardCallbackMerge(rc *realtime.BoardChannel, getBoardRe
 				}
 			}
 		} else  {
-			for i := 0; i < len(rc.GetBoardResponseFull.Bids); i+= 1 {
+			var i int
+			for i = 0; i < len(rc.GetBoardResponseFull.Bids); i+= 1 {
 				if rc.GetBoardResponseFull.Bids[i].Price == diffBid.Price {
 					rc.GetBoardResponseFull.Bids[i].Size = diffBid.Size
 					break
 				}
 			}
+			if i == len(rc.GetBoardResponseFull.Bids) {
+				rc.GetBoardResponseFull.Bids = append(rc.GetBoardResponseFull.Bids, diffBid)
+			}
 		}
 	}
+	sort.Slice(rc.GetBoardResponseFull.Asks, func (i int, j int) bool {
+		return rc.GetBoardResponseFull.Asks[i].Price < rc.GetBoardResponseFull.Asks[j].Price
+	})
+	sort.Slice(rc.GetBoardResponseFull.Bids, func (i int, j int) bool {
+		return rc.GetBoardResponseFull.Bids[i].Price > rc.GetBoardResponseFull.Bids[j].Price
+	})
 }
 
 func (c *APIClient) RealBoardCallback(conn *websocket.Conn, calbackData interface{}) (error) {

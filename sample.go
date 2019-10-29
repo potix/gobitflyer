@@ -15,7 +15,15 @@ func realtimeTickerCallback(productCode types.ProductCode, getTickerResponse *pu
 }
 
 func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
-        log.Printf("board: (%v) %#v", productCode, getBoardResponse)
+        log.Printf("board: Mid Price", getBoardResponse.MidPrice)
+        log.Printf("--- asks ---")
+	for i := 0; i < 5; i+= 1 {
+		log.Printf("%#v", getBoardResponse.Asks[i])
+	}
+        log.Printf("--- bids ---")
+	for i := 0; i < 5; i+= 1 {
+		log.Printf("%#v", getBoardResponse.Bids[i])
+	}
 }
 
 func main() {
@@ -55,13 +63,13 @@ func main() {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        err = apiClient.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil, false)
+        err = apiClient.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil, true)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
 
-        time.Sleep(20 * time.Second)
+        time.Sleep(30 * time.Second)
 
         err = apiClient.RealTickerStop("BTC_JPY")
         if err != nil {
