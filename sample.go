@@ -11,17 +11,24 @@ import (
 )
 
 func realtimeTickerCallback(productCode types.ProductCode, getTickerResponse *public.GetTickerResponse, callbackData interface{}) {
-        log.Printf("ticker: (%v) %#v", productCode, getTickerResponse)
+        log.Printf("===== ticker =====")
+        log.Printf("timestamp %v", getTickerResponse.Timestamp)
+        log.Printf("Best Bid Price %v Size %v", getTickerResponse.BestBid, getTickerResponse.BestBidSize)
+        log.Printf("Best Ask Price %v Size %v", getTickerResponse.BestAsk, getTickerResponse.BestAskSize)
+        log.Printf("Total Bid %v", getTickerResponse.TotalBidDepth)
+        log.Printf("Total Ask %v", getTickerResponse.TotalAskDepth)
+        log.Printf("Volume %v Volume By Product %v", getTickerResponse.Volume, getTickerResponse.VolumeByProduct)
 }
 
 func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
-        log.Printf("board: Mid Price", getBoardResponse.MidPrice)
+        log.Printf("===== board=====")
+        log.Printf("Mid Price %v", getBoardResponse.MidPrice)
         log.Printf("--- asks ---")
-	for i := 0; i < 5; i+= 1 {
+	for i := 0; i < 6; i+= 1 {
 		log.Printf("%#v", getBoardResponse.Asks[i])
 	}
         log.Printf("--- bids ---")
-	for i := 0; i < 5; i+= 1 {
+	for i := 0; i < 6; i+= 1 {
 		log.Printf("%#v", getBoardResponse.Bids[i])
 	}
 }
@@ -41,21 +48,42 @@ func main() {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        log.Printf("%#v --- n%#v", httpResponse, getMarketsResponse)
+        log.Printf("===== markkets =====")
+        log.Printf("status %v", httpResponse.Status)
+	for _, market := range getMarketsResponse {
+		log.Printf("%v", market.ProductCode)
+	}
 
         httpResponse, getBoardResponse, err :=  apiClient.PubGetBoard("BTC_JPY")
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        log.Printf("%#v --- %#v", httpResponse, getBoardResponse)
+        log.Printf("===== board=====")
+        log.Printf("status %v", httpResponse.Status)
+        log.Printf("Mid Price %v", getBoardResponse.MidPrice)
+        log.Printf("--- asks ---")
+	for i := 0; i < 6; i+= 1 {
+		log.Printf("%#v", getBoardResponse.Asks[i])
+	}
+        log.Printf("--- bids ---")
+	for i := 0; i < 6; i+= 1 {
+		log.Printf("%#v", getBoardResponse.Bids[i])
+	}
 
         httpResponse, getTickerResponse, err :=  apiClient.PubGetTicker("BTC_JPY")
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        log.Printf("%#v --- %#v", httpResponse, getTickerResponse)
+        log.Printf("===== ticker =====")
+        log.Printf("status %v", httpResponse.Status)
+        log.Printf("timestamp %v", getTickerResponse.Timestamp)
+        log.Printf("Best Bid Price %v Size %v", getTickerResponse.BestBid, getTickerResponse.BestBidSize)
+        log.Printf("Best Ask Price %v Size %v", getTickerResponse.BestAsk, getTickerResponse.BestAskSize)
+        log.Printf("Total Bid %v", getTickerResponse.TotalBidDepth)
+        log.Printf("Total Ask %v", getTickerResponse.TotalAskDepth)
+        log.Printf("Volume %v Volume By Product %v", getTickerResponse.Volume, getTickerResponse.VolumeByProduct)
 
 	// realtime api
         err = apiClient.RealTickerStart("BTC_JPY", realtimeTickerCallback, nil)
