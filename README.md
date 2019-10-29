@@ -1,2 +1,2 @@
 # gobitflyer
-bitFlyer Lightning api library written by go lang
+The bitFlyer Lightning api library which written by golang.
