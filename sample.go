@@ -22,7 +22,7 @@ func main() {
         }
         apiClient :=  api.NewAPIClient(httpClient, authenticator)
 
-	// publiv api
+	// public api
         httpResponse, getMarketsResponse, err :=  apiClient.PubGetMarkets()
         if err != nil {
                 log.Printf("error: %v", err)
