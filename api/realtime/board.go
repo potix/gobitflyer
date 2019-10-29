@@ -13,8 +13,8 @@ type BoardChannel struct {
 	WsClient             *client.WSClient
 	Callback             BoardCallback
 	CallbackData         interface{}
-	Subscribed           bool
-	WriteDataChan        chan *JsonRPC2Subscribe
+	Subscribed           uint32
+	UnsubscribeChan      chan *JsonRPC2Subscribe
 	Merge                bool
 	GetBoardResponseFull *public.GetBoardResponse
 }

@@ -9,12 +9,12 @@ import (
 type BoardSnapshotCallback func(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{})
 
 type BoardSnapshotChannel struct {
-        ProductCode   types.ProductCode
-	WsClient      *client.WSClient
-	Callback      BoardSnapshotCallback
-	CallbackData  interface{}
-	Subscribed    bool
-	WriteDataChan chan *JsonRPC2Subscribe
+        ProductCode     types.ProductCode
+	WsClient        *client.WSClient
+	Callback        BoardSnapshotCallback
+	CallbackData    interface{}
+	Subscribed      uint32
+	UnsubscribeChan chan *JsonRPC2Subscribe
 }
 
 type JsonRPC2BoardSnapshotNotify struct {

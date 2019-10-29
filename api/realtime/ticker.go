@@ -9,12 +9,12 @@ import (
 type TickerCallback func(productCode types.ProductCode, getTickerResponse *public.GetTickerResponse, callbackData interface{})
 
 type TickerChannel struct {
-	ProductCode   types.ProductCode
-	WsClient      *client.WSClient
-	Callback      TickerCallback
-	CallbackData  interface{}
-	Subscribed    bool
-	WriteDataChan chan *JsonRPC2Subscribe
+	ProductCode     types.ProductCode
+	WsClient        *client.WSClient
+	Callback        TickerCallback
+	CallbackData    interface{}
+	Subscribed      uint32
+	UnsubscribeChan chan *JsonRPC2Subscribe
 }
 
 type JsonRPC2TickerNotify struct {

@@ -9,12 +9,12 @@ import (
 type ExecutionsCallback func(productCode types.ProductCode, getExecutionsResponse public.GetExecutionsResponse, callbackData interface{})
 
 type ExecutionsChannel struct {
-        ProductCode   types.ProductCode
-	WsClient      *client.WSClient
-	Callback      ExecutionsCallback
-	CallbackData  interface{}
-	Subscribed    bool
-	WriteDataChan chan *JsonRPC2Subscribe
+        ProductCode     types.ProductCode
+	WsClient        *client.WSClient
+	Callback        ExecutionsCallback
+	CallbackData    interface{}
+	Subscribed      uint32
+	UnsubscribeChan chan *JsonRPC2Subscribe
 }
 
 type JsonRPC2ExecutionsNotify struct {
