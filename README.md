@@ -5,8 +5,6 @@ This is bitFlyer Lightning api library which written by golang.
 See samaple.go.
 
 ## TODO
-- realtime api execution
-- realtime api board
 - GET /v1/me/getaddresses
 - GET /v1/me/getcoinins
 - GET /v1/me/getcoinouts
