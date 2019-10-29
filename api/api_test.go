@@ -708,7 +708,7 @@ func TestRealSubscribeBoard(t *testing.T) {
 		t: t,
 		m: "test",
 	}
-	err := apiClient.RealBoardStart("BTC_JPY", boardCallback, tcbd)
+	err := apiClient.RealBoardStart("BTC_JPY", boardCallback, tcbd, true)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
