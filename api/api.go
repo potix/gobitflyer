@@ -611,10 +611,6 @@ func (c *APIClient) PriGetParentOrder(IdType types.IdType, orderId string) (*htt
 	return httpResponse, getParentOrderResponse, nil
 }
 
-
-
-
-
 func (c *APIClient) RealTickerCallback(conn *websocket.Conn, calbackData interface{}) (error) {
 	rc := (calbackData).(*realtime.TickerChannel)
 	select {
@@ -677,12 +673,6 @@ func (c *APIClient) RealTickerStop(productCode types.ProductCode) (error) {
 	delete(c.realTickerChannels, productCode)
 	return nil
 }
-
-
-
-
-
-
 
 func (c *APIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackData interface{}) (error) {
 	rc := (calbackData).(*realtime.BoardSnapshotChannel)
@@ -747,11 +737,6 @@ func (c *APIClient) RealBoardSnapshotStop(productCode types.ProductCode) (error)
 	return nil
 }
 
-
-
-
-
-
 func (c *APIClient) RealBoardCallback(conn *websocket.Conn, calbackData interface{}) (error) {
 	rc := (calbackData).(*realtime.BoardChannel)
 	select {
@@ -815,9 +800,6 @@ func (c *APIClient) RealBoardStop(productCode types.ProductCode) (error) {
 	return nil
 }
 
-
-
-
 func (c *APIClient) RealExecutionsCallback(conn *websocket.Conn, calbackData interface{}) (error) {
 	rc := (calbackData).(*realtime.ExecutionsChannel)
 	select {
@@ -879,9 +861,6 @@ func (c *APIClient) RealExecutionsStop(productCode types.ProductCode) (error) {
 	delete(c.realExecutionsChannels, productCode)
 	return nil
 }
-
-
-
 
 func NewAPIClient(httpClient *client.HTTPClient, authenticator Authenticator) (*APIClient) {
 	return &APIClient{
