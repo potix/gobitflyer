@@ -9,12 +9,14 @@ import (
 type BoardCallback func(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{})
 
 type BoardChannel struct {
-	ProductCode   types.ProductCode
-	WsClient      *client.WSClient
-	Callback      BoardCallback
-	CallbackData  interface{}
-	Subscribed    bool
-	WriteDataChan chan *JsonRPC2Subscribe
+	ProductCode          types.ProductCode
+	WsClient             *client.WSClient
+	Callback             BoardCallback
+	CallbackData         interface{}
+	Subscribed           bool
+	WriteDataChan        chan *JsonRPC2Subscribe
+	Merge                bool
+	GetBoardResponseFull *public.GetBoardResponse
 }
 
 type JsonRPC2BoardNotify struct {

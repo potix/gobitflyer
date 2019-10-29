@@ -737,10 +737,61 @@ func (c *APIClient) RealBoardSnapshotStop(productCode types.ProductCode) (error)
 	return nil
 }
 
+func (c *APIClient) RealBoardCallbackMerge(rc *realtime.BoardChannel, getBoardResponseDiff *public.GetBoardResponse) {
+	rc.GetBoardResponseFull.MidPrice = getBoardResponseDiff.MidPrice
+	for _, diffAsk := range getBoardResponseDiff.Asks {
+		if diffAsk.Price == 0 {
+			continue
+		}
+		if diffAsk.Size == 0 {
+			for i := 0; i < len(rc.GetBoardResponseFull.Asks); i+= 1 {
+				if rc.GetBoardResponseFull.Asks[i].Price == diffAsk.Price {
+					rc.GetBoardResponseFull.Asks = append(rc.GetBoardResponseFull.Asks[:i], rc.GetBoardResponseFull.Asks[i+1:]...)
+					break
+				}
+			}
+		} else  {
+			for i := 0; i < len(rc.GetBoardResponseFull.Asks); i+= 1 {
+				if rc.GetBoardResponseFull.Asks[i].Price == diffAsk.Price {
+					rc.GetBoardResponseFull.Asks[i].Size = diffAsk.Size
+					break
+				}
+			}
+		}
+	}
+	for _, diffBid := range getBoardResponseDiff.Bids {
+		if diffBid.Price == 0 {
+			continue
+		}
+		if diffBid.Size == 0 {
+			for i := 0; i < len(rc.GetBoardResponseFull.Bids); i+= 1 {
+				if rc.GetBoardResponseFull.Bids[i].Price == diffBid.Price {
+					rc.GetBoardResponseFull.Bids = append(rc.GetBoardResponseFull.Bids[:i], rc.GetBoardResponseFull.Bids[i+1:]...)
+					break
+				}
+			}
+		} else  {
+			for i := 0; i < len(rc.GetBoardResponseFull.Bids); i+= 1 {
+				if rc.GetBoardResponseFull.Bids[i].Price == diffBid.Price {
+					rc.GetBoardResponseFull.Bids[i].Size = diffBid.Size
+					break
+				}
+			}
+		}
+	}
+}
+
 func (c *APIClient) RealBoardCallback(conn *websocket.Conn, calbackData interface{}) (error) {
 	rc := (calbackData).(*realtime.BoardChannel)
 	select {
 	case d := <-rc.WriteDataChan:
+		if rc.Merge && d.Method == "subscribe" {
+			_, getBoardResponse, err := c.PubGetBoard(rc.ProductCode)
+			if err != nil {
+				return errors.Wrapf(err, "can not get board response")
+			}
+			rc.GetBoardResponseFull = getBoardResponse
+		}
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		err := conn.WriteJSON(d)
 		if err != nil {
@@ -759,25 +810,32 @@ func (c *APIClient) RealBoardCallback(conn *websocket.Conn, calbackData interfac
 			if err != nil {
 				return errors.Wrapf(err, "can not read message")
 			}
-			rc.Callback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
+			if rc.Merge {
+				c.RealBoardCallbackMerge(rc, notify.Params.Message)
+				rc.Callback(rc.ProductCode, rc.GetBoardResponseFull, rc.CallbackData)
+			} else {
+				rc.Callback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
+			}
 		}
 		return nil
 	}
 }
 
-func (c *APIClient) RealBoardStart(productCode types.ProductCode, callback realtime.BoardCallback, callbackData interface{}) (error){
+func (c *APIClient) RealBoardStart(productCode types.ProductCode, callback realtime.BoardCallback, callbackData interface{}, merge bool) (error){
 	wsRequest := &client.WSRequest {
 		URL: realtimeEndpoint,
 		Headers: make(map[string]string),
 	}
 	wsClient := client.NewWSClient(0, 0, 60, 1)
 	rc := &realtime.BoardChannel{
-		ProductCode:  productCode,
-		WsClient:     wsClient,
-		Callback:     callback,
-		CallbackData: callbackData,
-		Subscribed:   false,
-		WriteDataChan: make(chan *realtime.JsonRPC2Subscribe),
+		ProductCode:          productCode,
+		WsClient:             wsClient,
+		Callback:             callback,
+		CallbackData:         callbackData,
+		Subscribed:           false,
+		WriteDataChan:        make(chan *realtime.JsonRPC2Subscribe),
+		Merge:                merge,
+		GetBoardResponseFull: nil,
 	}
 	err := wsClient.Start(wsRequest, c.RealBoardCallback, rc)
 	if err != nil {

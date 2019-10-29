@@ -55,7 +55,7 @@ func main() {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        err = apiClient.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil)
+        err = apiClient.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil, false)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
