@@ -105,12 +105,12 @@ func main() {
 
         time.Sleep(20 * time.Second)
 
-        err = realApiClient1.RealTickerStop("BTC_JPY")
+        err = realApiClient1.RealStop()
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        err = realApiClient2.RealBoardStop("BTC_JPY")
+        err = realApiClient2.RealStop()
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)

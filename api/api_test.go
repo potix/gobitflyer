@@ -665,7 +665,7 @@ func TestRealSubscribeTicker(t *testing.T) {
 
 	time.Sleep(20 * time.Second)
 
-	err = realApiClient.RealTickerStop("BTC_JPY")
+	err = realApiClient.RealStop()
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -693,7 +693,7 @@ func TestRealSubscribeBoardSnapshot(t *testing.T) {
 
 	time.Sleep(20 * time.Second)
 
-	err = realApiClient.RealBoardSnapshotStop("BTC_JPY")
+	err = realApiClient.RealStop()
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -720,7 +720,7 @@ func TestRealSubscribeBoard(t *testing.T) {
 
 	time.Sleep(20 * time.Second)
 
-	err = realApiClient.RealBoardStop("BTC_JPY")
+	err = realApiClient.RealStop()
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -747,7 +747,7 @@ func TestRealSubscribeExecutions(t *testing.T) {
 
 	time.Sleep(20 * time.Second)
 
-	err = realApiClient.RealExecutionsStop("BTC_JPY")
+	err = realApiClient.RealStop()
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}

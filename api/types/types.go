@@ -87,3 +87,11 @@ const (
 	ConditionTypeTrail     ConditionType = "TRAIL"
 )
 
+type RealtimeType int
+
+const (
+	RealtimeTypeBoardSnapshot RealtimeType = 1
+	RealtimeTypeBoard         RealtimeType = 2
+	RealtimeTypeTicker        RealtimeType = 3
+	RealtimeTypeExecutions    RealtimeType = 4
+)

@@ -617,89 +617,15 @@ func NewAPIClient(httpClient *client.HTTPClient, authenticator Authenticator) (*
 	}
 }
 
-
-
 type RealAPIClient struct {
 	endpoint                  string
 	wsClient                  *client.WSClient
 	apiClient                 *APIClient
-	realTickerChannels        map[types.ProductCode]*realtime.TickerChannel
-	realBoardChannels         map[types.ProductCode]*realtime.BoardChannel
-	realBoardSnapshotChannels map[types.ProductCode]*realtime.BoardSnapshotChannel
-	realExecutionsChannels    map[types.ProductCode]*realtime.ExecutionsChannel
-}
-
-func (c *RealAPIClient) RealTickerCallback(conn *websocket.Conn, calbackData interface{}) (error) {
-	rc := (calbackData).(*realtime.TickerChannel)
-	select {
-	case d := <-rc.UnsubscribeChan:
-		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-		err := conn.WriteJSON(d)
-		if err != nil {
-			return errors.Wrapf(err, "can not write subscribe or unsubscribed")
-		}
-		atomic.StoreUint32(&rc.Subscribed, 0)
-		return nil
-	default:
-		if atomic.LoadUint32(&rc.Subscribed) == 0 {
-			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "subscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_ticker_" + string(rc.ProductCode)}})
-			if err != nil {
-				return errors.Wrapf(err, "can not write subscribe or unsubscribed")
-			}
-			atomic.StoreUint32(&rc.Subscribed, 1)
-		} else {
-			notify := new(realtime.JsonRPC2TickerNotify)
-			err := conn.ReadJSON(notify);
-			if err != nil {
-				return errors.Wrapf(err, "can not read message")
-			}
-			rc.Callback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
-		}
-		return nil
-	}
-}
-
-func (c *RealAPIClient) RealTickerStart(productCode types.ProductCode, callback realtime.TickerCallback, callbackData interface{}) (error){
-	_, ok := c.realTickerChannels[productCode]
-	if ok {
-		return errors.Errorf("already exists realtime api connection")
-	}
-	wsRequest := &client.WSRequest {
-		URL: c.endpoint,
-		Headers: make(map[string]string),
-	}
-	rc := &realtime.TickerChannel{
-		ProductCode:     productCode,
-		Callback:        callback,
-		CallbackData:    callbackData,
-		Subscribed:      0,
-		UnsubscribeChan: make(chan *realtime.JsonRPC2Subscribe),
-	}
-	err := c.wsClient.Start(wsRequest, c.RealTickerCallback, rc)
-	if err != nil {
-		return errors.Wrapf(err, "can not connect realtime api")
-	}
-	c.realTickerChannels[productCode] = rc
-	return nil
-}
-
-func (c *RealAPIClient) RealTickerStop(productCode types.ProductCode) (error) {
-	rc, ok := c.realTickerChannels[productCode]
-	if !ok {
-		return errors.Errorf("not found realtime api connection")
-	}
-	if atomic.LoadUint32(&rc.Subscribed) == 1 {
-		rc.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "unsubscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_ticker_" + string(productCode)}}
-	}
-	c.wsClient.Stop()
-	close(rc.UnsubscribeChan)
-	delete(c.realTickerChannels, productCode)
-	return nil
+	realtimeChannel           *realtime.RealtimeChannel
 }
 
 func (c *RealAPIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackData interface{}) (error) {
-	rc := (calbackData).(*realtime.BoardSnapshotChannel)
+	rc := (calbackData).(*realtime.RealtimeChannel)
 	select {
 	case d := <-rc.UnsubscribeChan:
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
@@ -712,7 +638,13 @@ func (c *RealAPIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackD
 	default:
 		if atomic.LoadUint32(&rc.Subscribed) == 0 {
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "subscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_board_snapshot_" + string(rc.ProductCode)}})
+			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{
+					JsonRpc: "2.0",
+					Method:  "subscribe",
+					Params:  realtime.JsonRPC2SubscribeParams{
+						Channel: "lightning_board_snapshot_" + string(rc.ProductCode),
+					},
+				})
 			if err != nil {
 				return errors.Wrapf(err, "can not write subscribe or unsubscribed")
 			}
@@ -723,51 +655,42 @@ func (c *RealAPIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackD
 			if err != nil {
 				return errors.Wrapf(err, "can not read message")
 			}
-			rc.Callback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
+			rc.BoardSnapshotCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
 		}
 		return nil
 	}
 }
 
 func (c *RealAPIClient) RealBoardSnapshotStart(productCode types.ProductCode, callback realtime.BoardSnapshotCallback, callbackData interface{}) (error){
-	_, ok := c.realBoardSnapshotChannels[productCode]
-	if ok {
+	if c.realtimeChannel != nil {
 		return errors.Errorf("already exists realtime api connection")
 	}
 	wsRequest := &client.WSRequest {
 		URL: c.endpoint,
 		Headers: make(map[string]string),
 	}
-	rc := &realtime.BoardSnapshotChannel{
-		ProductCode:  productCode,
-		Callback:     callback,
-		CallbackData: callbackData,
-		Subscribed:   0,
-		UnsubscribeChan: make(chan *realtime.JsonRPC2Subscribe),
+	rc := &realtime.RealtimeChannel{
+		ProductCode:           productCode,
+		RealtimeType:          types.RealtimeTypeBoardSnapshot,
+                BoardSnapshotCallback: callback,
+                BoardCallback:         nil,
+                TickerCallback:        nil,
+                ExecutionsCallback:    nil,
+		CallbackData:          callbackData,
+		Subscribed:            0,
+		UnsubscribeChan:       make(chan *realtime.JsonRPC2Subscribe),
+		Merge:                 false,
+		GetBoardResponseFull:  nil,
 	}
 	err := c.wsClient.Start(wsRequest, c.RealBoardSnapshotCallback, rc)
 	if err != nil {
 		return errors.Wrapf(err, "can not connect realtime api")
 	}
-	c.realBoardSnapshotChannels[productCode] = rc
+	c.realtimeChannel = rc
 	return nil
 }
 
-func (c *RealAPIClient) RealBoardSnapshotStop(productCode types.ProductCode) (error) {
-	rc, ok := c.realBoardSnapshotChannels[productCode]
-	if !ok {
-		return errors.Errorf("not found realtime api connection")
-	}
-	if atomic.LoadUint32(&rc.Subscribed) == 1 {
-		rc.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "unsubscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_board_snapshot_" + string(productCode)}}
-	}
-	c.wsClient.Stop()
-	close(rc.UnsubscribeChan)
-	delete(c.realBoardSnapshotChannels, productCode)
-	return nil
-}
-
-func (c *RealAPIClient) RealBoardCallbackMerge(rc *realtime.BoardChannel, getBoardResponseDiff *public.GetBoardResponse) {
+func (c *RealAPIClient) realBoardCallbackMerge(rc *realtime.RealtimeChannel, getBoardResponseDiff *public.GetBoardResponse) {
 	rc.GetBoardResponseFull.MidPrice = getBoardResponseDiff.MidPrice
 	for _, diffAsk := range getBoardResponseDiff.Asks {
 		if diffAsk.Price == 0 {
@@ -825,8 +748,8 @@ func (c *RealAPIClient) RealBoardCallbackMerge(rc *realtime.BoardChannel, getBoa
 	})
 }
 
-func (c *RealAPIClient) RealBoardCallback(conn *websocket.Conn, calbackData interface{}) (error) {
-	rc := (calbackData).(*realtime.BoardChannel)
+func (c *RealAPIClient) realBoardCallback(conn *websocket.Conn, calbackData interface{}) (error) {
+	rc := (calbackData).(*realtime.RealtimeChannel)
 	select {
 	case d := <-rc.UnsubscribeChan:
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
@@ -846,7 +769,13 @@ func (c *RealAPIClient) RealBoardCallback(conn *websocket.Conn, calbackData inte
 				rc.GetBoardResponseFull = getBoardResponse
 			}
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "subscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_board_" + string(rc.ProductCode)}})
+			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{
+					JsonRpc: "2.0",
+					Method: "subscribe",
+					Params: realtime.JsonRPC2SubscribeParams{
+						Channel: "lightning_board_" + string(rc.ProductCode),
+					},
+				})
 			if err != nil {
 				return errors.Wrapf(err, "can not write subscribe or unsubscribed")
 			}
@@ -858,10 +787,10 @@ func (c *RealAPIClient) RealBoardCallback(conn *websocket.Conn, calbackData inte
 				return errors.Wrapf(err, "can not read message")
 			}
 			if rc.Merge {
-				c.RealBoardCallbackMerge(rc, notify.Params.Message)
-				rc.Callback(rc.ProductCode, rc.GetBoardResponseFull, rc.CallbackData)
+				c.realBoardCallbackMerge(rc, notify.Params.Message)
+				rc.BoardCallback(rc.ProductCode, rc.GetBoardResponseFull, rc.CallbackData)
 			} else {
-				rc.Callback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
+				rc.BoardCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
 			}
 		}
 		return nil
@@ -869,47 +798,102 @@ func (c *RealAPIClient) RealBoardCallback(conn *websocket.Conn, calbackData inte
 }
 
 func (c *RealAPIClient) RealBoardStart(productCode types.ProductCode, callback realtime.BoardCallback, callbackData interface{}, merge bool) (error){
-	_, ok := c.realBoardChannels[productCode]
-	if ok {
+	if c.realtimeChannel != nil {
 		return errors.Errorf("already exists realtime api connection")
 	}
 	wsRequest := &client.WSRequest {
 		URL: c.endpoint,
 		Headers: make(map[string]string),
 	}
-	rc := &realtime.BoardChannel{
-		ProductCode:          productCode,
-		Callback:             callback,
-		CallbackData:         callbackData,
-		Subscribed:           0,
-		UnsubscribeChan:      make(chan *realtime.JsonRPC2Subscribe),
-		Merge:                merge,
-		GetBoardResponseFull: nil,
+	rc := &realtime.RealtimeChannel{
+		ProductCode:           productCode,
+		RealtimeType:          types.RealtimeTypeBoard,
+                BoardSnapshotCallback: nil,
+                BoardCallback:         callback,
+                TickerCallback:        nil,
+                ExecutionsCallback:    nil,
+		CallbackData:          callbackData,
+		Subscribed:            0,
+		UnsubscribeChan:       make(chan *realtime.JsonRPC2Subscribe),
+		Merge:                 merge,
+		GetBoardResponseFull:  nil,
 	}
-	err := c.wsClient.Start(wsRequest, c.RealBoardCallback, rc)
+	err := c.wsClient.Start(wsRequest, c.realBoardCallback, rc)
 	if err != nil {
 		return errors.Wrapf(err, "can not connect realtime api")
 	}
-	c.realBoardChannels[productCode] = rc
+	c.realtimeChannel = rc
 	return nil
 }
 
-func (c *RealAPIClient) RealBoardStop(productCode types.ProductCode) (error) {
-	rc, ok := c.realBoardChannels[productCode]
-	if !ok {
-		return errors.Errorf("not found realtime api connection")
+func (c *RealAPIClient) realTickerCallback(conn *websocket.Conn, calbackData interface{}) (error) {
+	rc := (calbackData).(*realtime.RealtimeChannel)
+	select {
+	case d := <-rc.UnsubscribeChan:
+		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+		err := conn.WriteJSON(d)
+		if err != nil {
+			return errors.Wrapf(err, "can not write subscribe or unsubscribed")
+		}
+		atomic.StoreUint32(&rc.Subscribed, 0)
+		return nil
+	default:
+		if atomic.LoadUint32(&rc.Subscribed) == 0 {
+			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{
+					JsonRpc: "2.0",
+					Method: "subscribe",
+					Params: realtime.JsonRPC2SubscribeParams{
+						Channel: "lightning_ticker_" + string(rc.ProductCode),
+					},
+				})
+			if err != nil {
+				return errors.Wrapf(err, "can not write subscribe or unsubscribed")
+			}
+			atomic.StoreUint32(&rc.Subscribed, 1)
+		} else {
+			notify := new(realtime.JsonRPC2TickerNotify)
+			err := conn.ReadJSON(notify);
+			if err != nil {
+				return errors.Wrapf(err, "can not read message")
+			}
+			rc.TickerCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
+		}
+		return nil
 	}
-	if atomic.LoadUint32(&rc.Subscribed) == 1 {
-		rc.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "unsubscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_board_" + string(productCode)}}
+}
+
+func (c *RealAPIClient) RealTickerStart(productCode types.ProductCode, callback realtime.TickerCallback, callbackData interface{}) (error){
+	if c.realtimeChannel != nil {
+		return errors.Errorf("already exists realtime api connection")
 	}
-	c.wsClient.Stop()
-	close(rc.UnsubscribeChan)
-	delete(c.realBoardChannels, productCode)
+	wsRequest := &client.WSRequest {
+		URL: c.endpoint,
+		Headers: make(map[string]string),
+	}
+	rc := &realtime.RealtimeChannel{
+		ProductCode:           productCode,
+		RealtimeType:          types.RealtimeTypeTicker,
+                BoardSnapshotCallback: nil,
+                BoardCallback:         nil,
+                TickerCallback:        callback,
+                ExecutionsCallback:    nil,
+		CallbackData:          callbackData,
+		Subscribed:            0,
+		UnsubscribeChan:       make(chan *realtime.JsonRPC2Subscribe),
+		Merge:                 false,
+		GetBoardResponseFull:  nil,
+	}
+	err := c.wsClient.Start(wsRequest, c.realTickerCallback, rc)
+	if err != nil {
+		return errors.Wrapf(err, "can not connect realtime api")
+	}
+	c.realtimeChannel = rc
 	return nil
 }
 
-func (c *RealAPIClient) RealExecutionsCallback(conn *websocket.Conn, calbackData interface{}) (error) {
-	rc := (calbackData).(*realtime.ExecutionsChannel)
+func (c *RealAPIClient) realExecutionsCallback(conn *websocket.Conn, calbackData interface{}) (error) {
+	rc := (calbackData).(*realtime.RealtimeChannel)
 	select {
 	case d := <-rc.UnsubscribeChan:
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
@@ -922,7 +906,13 @@ func (c *RealAPIClient) RealExecutionsCallback(conn *websocket.Conn, calbackData
 	default:
 		if atomic.LoadUint32(&rc.Subscribed) == 0 {
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "subscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_executions_" + string(rc.ProductCode)}})
+			err := conn.WriteJSON(&realtime.JsonRPC2Subscribe{
+					JsonRpc: "2.0",
+					Method: "subscribe",
+					Params: realtime.JsonRPC2SubscribeParams{
+						Channel: "lightning_executions_" + string(rc.ProductCode),
+					},
+				})
 			if err != nil {
 				return errors.Wrapf(err, "can not write subscribe")
 			}
@@ -933,47 +923,84 @@ func (c *RealAPIClient) RealExecutionsCallback(conn *websocket.Conn, calbackData
 			if err != nil {
 				return errors.Wrapf(err, "can not read message")
 			}
-			rc.Callback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
+			rc.ExecutionsCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
 		}
 		return nil
 	}
 }
 
 func (c *RealAPIClient) RealExecutionsStart(productCode types.ProductCode, callback realtime.ExecutionsCallback, callbackData interface{}) (error){
-	_, ok := c.realExecutionsChannels[productCode]
-	if ok {
+	if c.realtimeChannel != nil {
 		return errors.Errorf("already exists realtime api connection")
 	}
 	wsRequest := &client.WSRequest {
 		URL: c.endpoint,
 		Headers: make(map[string]string),
 	}
-	rc := &realtime.ExecutionsChannel{
-		ProductCode:     productCode,
-		Callback:        callback,
-		CallbackData:    callbackData,
-		Subscribed:      0,
-		UnsubscribeChan: make(chan *realtime.JsonRPC2Subscribe),
+	rc := &realtime.RealtimeChannel{
+		ProductCode:           productCode,
+		RealtimeType:          types.RealtimeTypeExecutions,
+                BoardSnapshotCallback: nil,
+                BoardCallback:         nil,
+                TickerCallback:        nil,
+                ExecutionsCallback:    callback,
+		CallbackData:          callbackData,
+		Subscribed:            0,
+		UnsubscribeChan:       make(chan *realtime.JsonRPC2Subscribe),
+		Merge:                 false,
+		GetBoardResponseFull:  nil,
 	}
-	err := c.wsClient.Start(wsRequest, c.RealExecutionsCallback, rc)
+	err := c.wsClient.Start(wsRequest, c.realExecutionsCallback, rc)
 	if err != nil {
 		return errors.Wrapf(err, "can not connect realtime api")
 	}
-	c.realExecutionsChannels[productCode] = rc
+	c.realtimeChannel = rc
 	return nil
 }
 
-func (c *RealAPIClient) RealExecutionsStop(productCode types.ProductCode) (error) {
-	rc, ok := c.realExecutionsChannels[productCode]
-	if !ok {
+func (c *RealAPIClient) RealStop() (error) {
+	if c.realtimeChannel == nil {
 		return errors.Errorf("not found realtime api connection")
 	}
-	if atomic.LoadUint32(&rc.Subscribed) == 1 {
-		rc.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{JsonRpc: "2.0", Method: "unsubscribe", Params: realtime.JsonRPC2SubscribeParams{Channel: "lightning_executions_" + string(productCode)}}
+	if atomic.LoadUint32(&c.realtimeChannel.Subscribed) == 1 {
+		switch  c.realtimeChannel.RealtimeType {
+		case types.RealtimeTypeBoardSnapshot:
+			c.realtimeChannel.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{
+									JsonRpc: "2.0",
+									Method:  "unsubscribe",
+									Params:  realtime.JsonRPC2SubscribeParams{
+										Channel: "lightning_board_snapshot_" + string(c.realtimeChannel.ProductCode),
+									},
+								}
+		case types.RealtimeTypeBoard:
+			c.realtimeChannel.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{
+									JsonRpc: "2.0",
+									Method:  "unsubscribe",
+									Params:  realtime.JsonRPC2SubscribeParams{
+										Channel: "lightning_board_" + string(c.realtimeChannel.ProductCode),
+									},
+								}
+		case types.RealtimeTypeTicker:
+			c.realtimeChannel.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{
+									JsonRpc: "2.0",
+									Method:  "unsubscribe",
+									Params:  realtime.JsonRPC2SubscribeParams{
+										Channel: "lightning_ticker_" + string(c.realtimeChannel.ProductCode),
+									},
+								}
+		case types.RealtimeTypeExecutions:
+			c.realtimeChannel.UnsubscribeChan <- &realtime.JsonRPC2Subscribe{
+									JsonRpc: "2.0",
+									Method:  "unsubscribe",
+									Params:  realtime.JsonRPC2SubscribeParams{
+										Channel: "lightning_executions_" + string(c.realtimeChannel.ProductCode),
+									},
+								}
+		}
 	}
 	c.wsClient.Stop()
-	close(rc.UnsubscribeChan)
-	delete(c.realExecutionsChannels, productCode)
+	close(c.realtimeChannel.UnsubscribeChan)
+	c.realtimeChannel = nil
 	return nil
 }
 
@@ -983,11 +1010,7 @@ func NewRealAPIClient(wsClient *client.WSClient, httpClient *client.HTTPClient) 
 		endpoint:                  realtimeApiEndpoint,
 		wsClient:                  wsClient,
 		apiClient:                 apiClient,
-		realTickerChannels:        make(map[types.ProductCode]*realtime.TickerChannel),
-		realBoardSnapshotChannels: make(map[types.ProductCode]*realtime.BoardSnapshotChannel),
-		realBoardChannels:         make(map[types.ProductCode]*realtime.BoardChannel),
-		realExecutionsChannels:    make(map[types.ProductCode]*realtime.ExecutionsChannel),
+		realtimeChannel:           nil,
 	}
 }
-
 
