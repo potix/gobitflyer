@@ -86,14 +86,18 @@ func main() {
         log.Printf("Volume %v Volume By Product %v", getTickerResponse.Volume, getTickerResponse.VolumeByProduct)
 
 	// realtime api
-	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
-        err = apiClient.RealTickerStart(wsClinet, "BTC_JPY", realtimeTickerCallback, nil)
+	wsClient := client.NewWSClient(0, 0, 3, 1, nil)
+        httpClient = client.NewHTTPClient(0, 0, 0, nil)
+        realApiClient1 := api.NewRealAPIClient(wsClient, httpClient)
+        err = realApiClient1.RealTickerStart("BTC_JPY", realtimeTickerCallback, nil)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-	wsClinet = client.NewWSClient(0, 0, 3, 1, nil)
-        err = apiClient.RealBoardStart(wsClinet, "BTC_JPY", realtimeBoardCallback, nil, true)
+	wsClient = client.NewWSClient(0, 0, 3, 1, nil)
+        httpClient = client.NewHTTPClient(0, 0, 0, nil)
+        realApiClient2 := api.NewRealAPIClient(wsClient, httpClient)
+        err = realApiClient2.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil, true)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
@@ -101,12 +105,12 @@ func main() {
 
         time.Sleep(20 * time.Second)
 
-        err = apiClient.RealTickerStop("BTC_JPY")
+        err = realApiClient1.RealTickerStop("BTC_JPY")
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-        err = apiClient.RealBoardStop("BTC_JPY")
+        err = realApiClient2.RealBoardStop("BTC_JPY")
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)

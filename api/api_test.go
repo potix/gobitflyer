@@ -633,6 +633,11 @@ func TestPriGetParentOrder(t *testing.T) {
 	t.Log(fmt.Sprintf("%#v", httpResponse))
 }
 
+func createRealApiClient(t *testing.T) (*api.RealAPIClient) {
+	httpClient := client.NewHTTPClient(30, 0, 180, nil)
+        wsClient := client.NewWSClient(0, 0, 60, 1, nil)
+	return api.NewRealAPIClient(wsClient, httpClient)
+}
 
 type testCallbackData struct {
 	t *testing.T
@@ -648,20 +653,19 @@ func tickerCallback(productCode types.ProductCode, getTickerResponse *public.Get
 }
 
 func TestRealSubscribeTicker(t *testing.T) {
-	apiClient := createApiClient(t)
+	realApiClient := createRealApiClient(t)
 	tcbd := &testCallbackData{
 		t: t,
 		m: "test",
 	}
-	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
-	err := apiClient.RealTickerStart(wsClinet, "BTC_JPY", tickerCallback, tcbd)
+	err := realApiClient.RealTickerStart("BTC_JPY", tickerCallback, tcbd)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
 
 	time.Sleep(20 * time.Second)
 
-	err = apiClient.RealTickerStop("BTC_JPY")
+	err = realApiClient.RealTickerStop("BTC_JPY")
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -677,20 +681,19 @@ func boardSnapshotCallback(productCode types.ProductCode, getBoardResponse *publ
 }
 
 func TestRealSubscribeBoardSnapshot(t *testing.T) {
-	apiClient := createApiClient(t)
+	realApiClient := createRealApiClient(t)
 	tcbd := &testCallbackData{
 		t: t,
 		m: "test",
 	}
-	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
-	err := apiClient.RealBoardSnapshotStart(wsClinet, "BTC_JPY", boardSnapshotCallback, tcbd)
+	err := realApiClient.RealBoardSnapshotStart("BTC_JPY", boardSnapshotCallback, tcbd)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
 
 	time.Sleep(20 * time.Second)
 
-	err = apiClient.RealBoardSnapshotStop("BTC_JPY")
+	err = realApiClient.RealBoardSnapshotStop("BTC_JPY")
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -705,20 +708,19 @@ func boardCallback(productCode types.ProductCode, getBoardResponse *public.GetBo
 }
 
 func TestRealSubscribeBoard(t *testing.T) {
-	apiClient := createApiClient(t)
+	realApiClient := createRealApiClient(t)
 	tcbd := &testCallbackData{
 		t: t,
 		m: "test",
 	}
-	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
-	err := apiClient.RealBoardStart(wsClinet, "BTC_JPY", boardCallback, tcbd, true)
+	err := realApiClient.RealBoardStart("BTC_JPY", boardCallback, tcbd, true)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
 
 	time.Sleep(20 * time.Second)
 
-	err = apiClient.RealBoardStop("BTC_JPY")
+	err = realApiClient.RealBoardStop("BTC_JPY")
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
@@ -733,20 +735,19 @@ func executionsCallback(productCode types.ProductCode, getExecutionsResponse pub
 }
 
 func TestRealSubscribeExecutions(t *testing.T) {
-	apiClient := createApiClient(t)
+	realApiClient := createRealApiClient(t)
 	tcbd := &testCallbackData{
 		t: t,
 		m: "test",
 	}
-	wsClinet := client.NewWSClient(0, 0, 3, 1, nil)
-	err := apiClient.RealExecutionsStart(wsClinet, "BTC_JPY", executionsCallback, tcbd)
+	err := realApiClient.RealExecutionsStart("BTC_JPY", executionsCallback, tcbd)
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
 
 	time.Sleep(20 * time.Second)
 
-	err = apiClient.RealExecutionsStop("BTC_JPY")
+	err = realApiClient.RealExecutionsStop("BTC_JPY")
 	if err != nil {
 		t.Errorf("error: %v", err)
 	}
