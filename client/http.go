@@ -1,6 +1,7 @@
 package client
 
 import (
+	"log"
 	"fmt"
 	"bytes"
 	"time"
@@ -34,6 +35,7 @@ type HTTPClient struct {
 	timeout           int
 	idleConnTimeout   int
 	localAddr         *net.TCPAddr
+	localAddrIp       net.IP
 	resolver          *dnscache.Resolver
 	resolverIdx       int
 	resolverIdxMutex  *sync.Mutex
@@ -45,33 +47,37 @@ func (c *HTTPClient) newHTTPTransport(scheme string, host string) (*http.Transpo
 	newTransport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		Dial: func(network string, address string) (net.Conn, error) {
-			ipv6 := false
-			if strings.LastIndex(address, ".") == -1 {
-				ipv6 = true
-			}
 			separator := strings.LastIndex(address, ":")
 			ips, _ := c.resolver.Fetch(address[:separator])
+			var ip net.IP
 			c.resolverIdxMutex.Lock()
 			defer c.resolverIdxMutex.Unlock()
-			c.resolverIdx += 1
-			if len(ips) <= c.resolverIdx {
+			if c.resolverIdx >= len(ips) {
 				c.resolverIdx = 0
 			}
-			resolverIds := c.resolverIdx
-			ip := ips[resolverIds]
-			ipStr := ip.String()
-			if strings.LastIndex(ipStr, ".") == -1 {
-				ipv6 = true
+			var i int
+			for i = c.resolverIdx; i < len(ips); i++ {
+				tmpIp := ips[i]
+				srcIpStr := c.localAddrIp.String()
+				dstIpStr := tmpIp.String()
+				if (!strings.Contains(srcIpStr, ":") && strings.Contains(dstIpStr, ":")) ||
+				   (strings.Contains(srcIpStr, ":") && !strings.Contains(dstIpStr, ":")) {
+					continue
+				}
+				ip = tmpIp
+				break
 			}
-			if ipv6 {
-				ipStr = "[" + ipStr + "]"
+			if ip == nil {
+				log.Printf("can not look up address %v in dns cache", address[:separator])
+				return net.Dial(network, address)
 			}
+			c.resolverIdx = i + 1
 			return (&net.Dialer{
 				LocalAddr: c.localAddr,
 				Timeout:   time.Duration(c.timeout) * time.Second,
 				KeepAlive: time.Duration(c.timeout) * time.Second,
 				//DualStack: true,
-			}).Dial("tcp", ipStr+address[separator:])
+			}).Dial("tcp", net.JoinHostPort(ip.String(), address[separator+1:]))
 		},
 		//ForceAttemptHTTP2: true,
 		ResponseHeaderTimeout: time.Duration(c.timeout) * time.Second,
@@ -145,6 +151,7 @@ func NewHTTPClient(timeoutSec int, dnsCacheSec int, idleConnTimeout int, localAd
 	newHTTPClient := &HTTPClient{
 		timeout:           timeoutSec,
 		idleConnTimeout:   idleConnTimeout,
+		localAddrIp:       localAddr,
 		resolver:          dnscache.New(time.Second * time.Duration(dnsCacheSec)),
 		resolverIdx:       0,
 		resolverIdxMutex:  new(sync.Mutex),
