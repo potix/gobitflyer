@@ -433,7 +433,7 @@ func TestPriSendParentOrder(t *testing.T) {
 		ConditionType: types.ConditionTypeLimit,
 		Side: types.SideSell,
 		Size: 0.11,
-		Price: 2000000,
+		Price: 1900000,
 	}
 	httpResponse, sendParentOrderResponse, err := apiClient.PriSendParentOrder(types.OrderMethodIFD, 1, types.TimeInForceIOC, sendParentOrderParameter1, sendParentOrderParameter2)
 	if err != nil {
@@ -462,7 +462,7 @@ func TestPriCancelParentOrder(t *testing.T) {
 		ConditionType: types.ConditionTypeLimit,
 		Side: types.SideSell,
 		Size: 0.11,
-		Price: 2000000,
+		Price: 1900000,
 	}
 	httpResponse, sendParentOrderResponse, err := apiClient.PriSendParentOrder(types.OrderMethodIFD, 1, types.TimeInForceGTC, sendParentOrderParameter1, sendParentOrderParameter2)
 	if err != nil {
@@ -501,7 +501,7 @@ func TestPriGetParentOrders(t *testing.T) {
 		ConditionType: types.ConditionTypeLimit,
 		Side: types.SideSell,
 		Size: 0.11,
-		Price: 2000000,
+		Price: 1900000,
 	}
 	httpResponse, sendParentOrderResponse, err := apiClient.PriSendParentOrder(types.OrderMethodIFD, 1, types.TimeInForceGTC, sendParentOrderParameter1, sendParentOrderParameter2)
 	if err != nil {
@@ -577,7 +577,7 @@ func TestPriGetParentOrder(t *testing.T) {
 		ConditionType: types.ConditionTypeLimit,
 		Side: types.SideSell,
 		Size: 0.11,
-		Price: 2000000,
+		Price: 1900000,
 	}
 	httpResponse, sendParentOrderResponse, err := apiClient.PriSendParentOrder(types.OrderMethodIFD, 1, types.TimeInForceGTC, sendParentOrderParameter1, sendParentOrderParameter2)
 	if err != nil {

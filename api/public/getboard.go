@@ -17,6 +17,37 @@ type GetBoardResponse struct {
 	Asks     []*GetBoardBook `json:"asks"`
 }
 
+func (r *GetBoardResponse) Clone() (*GetBoardResponse) {
+	if r == nil {
+		return nil
+	}
+	newGetBoardResponse := &GetBoardResponse {
+		MidPrice: r.MidPrice,
+	}
+	if r.Bids != nil {
+		newGetBoardResponse.Bids = make([]*GetBoardBook, 0, len(r.Bids))
+		for _, bid := range r.Bids {
+			newBid := &GetBoardBook{
+				Price: bid.Price,
+				Size: bid.Size,
+			}
+			newGetBoardResponse.Bids = append(newGetBoardResponse.Bids, newBid)
+
+		}
+	}
+	if r.Asks != nil {
+		newGetBoardResponse.Asks = make([]*GetBoardBook, 0, len(r.Asks))
+		for _, ask := range r.Asks {
+			newAsk := &GetBoardBook{
+				Price: ask.Price,
+				Size: ask.Size,
+			}
+			newGetBoardResponse.Asks = append(newGetBoardResponse.Asks, newAsk)
+		}
+	}
+	return newGetBoardResponse
+}
+
 type GetBoardBook struct {
 	Price float64 `json:"price"`
 	Size  float64 `json:"size"`

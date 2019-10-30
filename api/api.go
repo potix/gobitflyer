@@ -690,7 +690,7 @@ func (c *RealAPIClient) RealBoardSnapshotStart(productCode types.ProductCode, ca
 	return nil
 }
 
-func (c *RealAPIClient) realBoardCallbackMerge(rc *realtime.RealtimeChannel, getBoardResponseDiff *public.GetBoardResponse) {
+func (c *RealAPIClient) realBoardCallbackMerge(rc *realtime.RealtimeChannel, getBoardResponseDiff *public.GetBoardResponse) (*public.GetBoardResponse) {
 	rc.GetBoardResponseFull.MidPrice = getBoardResponseDiff.MidPrice
 	for _, diffAsk := range getBoardResponseDiff.Asks {
 		if diffAsk.Price == 0 {
@@ -746,6 +746,7 @@ func (c *RealAPIClient) realBoardCallbackMerge(rc *realtime.RealtimeChannel, get
 	sort.Slice(rc.GetBoardResponseFull.Bids, func (i int, j int) bool {
 		return rc.GetBoardResponseFull.Bids[i].Price > rc.GetBoardResponseFull.Bids[j].Price
 	})
+	return rc.GetBoardResponseFull.Clone()
 }
 
 func (c *RealAPIClient) realBoardCallback(conn *websocket.Conn, calbackData interface{}) (error) {
@@ -787,8 +788,8 @@ func (c *RealAPIClient) realBoardCallback(conn *websocket.Conn, calbackData inte
 				return errors.Wrapf(err, "can not read message")
 			}
 			if rc.Merge {
-				c.realBoardCallbackMerge(rc, notify.Params.Message)
-				rc.BoardCallback(rc.ProductCode, rc.GetBoardResponseFull, rc.CallbackData)
+				getBoardResponse := c.realBoardCallbackMerge(rc, notify.Params.Message)
+				rc.BoardCallback(rc.ProductCode, getBoardResponse, rc.CallbackData)
 			} else {
 				rc.BoardCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
 			}
