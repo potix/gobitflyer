@@ -49,7 +49,7 @@ func (a *authenticator) LoadAPIKey() (error) {
         if err != nil {
                 return errors.Wrapf(err, "can not read api key file (%v)", a.apiKeyFile)
         }
-        s := strings.SplitN(string(apiKeyPair), "\n", 4)
+        s := strings.SplitN(string(apiKeyPair), "\n", 2)
         if len(s) < 2 {
                 return errors.Wrapf(err, "can not parse api key file (%v)", a.apiKeyFile)
         }
