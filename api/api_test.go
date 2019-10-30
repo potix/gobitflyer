@@ -634,9 +634,8 @@ func TestPriGetParentOrder(t *testing.T) {
 }
 
 func createRealApiClient(t *testing.T) (*api.RealAPIClient) {
-	httpClient := client.NewHTTPClient(30, 0, 180, nil)
         wsClient := client.NewWSClient(0, 0, 60, 1, nil)
-	return api.NewRealAPIClient(wsClient, httpClient)
+	return api.NewRealAPIClient(wsClient)
 }
 
 type testCallbackData struct {

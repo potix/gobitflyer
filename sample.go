@@ -87,16 +87,14 @@ func main() {
 
 	// realtime api
 	wsClient := client.NewWSClient(0, 0, 3, 1, nil)
-        httpClient = client.NewHTTPClient(0, 0, 0, nil)
-        realApiClient1 := api.NewRealAPIClient(wsClient, httpClient)
+        realApiClient1 := api.NewRealAPIClient(wsClient)
         err = realApiClient1.RealTickerStart("BTC_JPY", realtimeTickerCallback, nil)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
 	wsClient = client.NewWSClient(0, 0, 3, 1, nil)
-        httpClient = client.NewHTTPClient(0, 0, 0, nil)
-        realApiClient2 := api.NewRealAPIClient(wsClient, httpClient)
+        realApiClient2 := api.NewRealAPIClient(wsClient)
         err = realApiClient2.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil, true)
         if err != nil {
                 log.Printf("error: %v", err)
