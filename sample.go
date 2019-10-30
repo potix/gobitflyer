@@ -31,6 +31,7 @@ func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *publ
 	for i := 0; i < 6; i+= 1 {
 		log.Printf("%#v", getBoardResponse.Bids[i])
 	}
+	log.Printf("asks len %v, bids len %v", len(getBoardResponse.Asks), len(getBoardResponse.Bids))
 }
 
 func main() {
