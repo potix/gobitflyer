@@ -57,17 +57,17 @@ func (c *HTTPClient) newHTTPTransport(scheme string, host string) (*http.Transpo
 			}
 			var i int
 			for i = c.resolverIdx; i < len(ips); i++ {
-				tmpIp := ips[i]
+				ip = ips[i]
 				srcIpStr := c.localAddrIp.String()
-				dstIpStr := tmpIp.String()
+				dstIpStr := ip.String()
 				if (!strings.Contains(srcIpStr, ":") && strings.Contains(dstIpStr, ":")) ||
 				   (strings.Contains(srcIpStr, ":") && !strings.Contains(dstIpStr, ":")) {
+					// address family mismatch
 					continue
 				}
-				ip = tmpIp
 				break
 			}
-			if ip == nil {
+			if i >= len(ips) {
 				log.Printf("can not look up address %v in dns cache", address[:separator])
 				return net.Dial(network, address)
 			}
