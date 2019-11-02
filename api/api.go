@@ -17,8 +17,8 @@ import (
 )
 
 const (
-        BFCallableAPISpanSeconds int = 600
-        BFCallableAPICount       int = 500
+        BFCallableAPISpanSeconds int64 = 600
+        BFCallableAPICount       int64 = 500
 )
 
 const (
