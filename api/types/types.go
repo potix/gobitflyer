@@ -20,6 +20,7 @@ const (
 type Side string
 
 const (
+	SideNone Side = ""
 	SideBuy  Side = "BUY"
 	SideSell Side = "SELL"
 )

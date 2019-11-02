@@ -17,6 +17,11 @@ import (
 )
 
 const (
+        BFCallableAPISpanSeconds int = 600
+        BFCallableAPICount       int = 500
+)
+
+const (
 	apiEndpoint         string = "https://api.bitflyer.jp"
 	realtimeApiEndpoint string = "wss://ws.lightstream.bitflyer.com/json-rpc"
 )

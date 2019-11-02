@@ -21,6 +21,7 @@ func realtimeTickerCallback(productCode types.ProductCode, getTickerResponse *pu
 }
 
 func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
+/*
         log.Printf("===== board=====")
         log.Printf("Mid Price %v", getBoardResponse.MidPrice)
         log.Printf("--- asks ---")
@@ -32,6 +33,7 @@ func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *publ
 		log.Printf("%#v", getBoardResponse.Bids[i])
 	}
 	log.Printf("asks len %v, bids len %v", len(getBoardResponse.Asks), len(getBoardResponse.Bids))
+*/
 }
 
 func main() {
