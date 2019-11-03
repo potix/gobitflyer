@@ -657,6 +657,7 @@ func (c *RealAPIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackD
 			atomic.StoreUint32(&rc.Subscribed, 1)
 		} else {
 			notify := new(realtime.JsonRPC2BoardSnapshotNotify)
+			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
 				return errors.Wrapf(err, "can not read message")
@@ -795,6 +796,7 @@ func (c *RealAPIClient) realBoardCallback(conn *websocket.Conn, calbackData inte
 			atomic.StoreUint32(&rc.Subscribed, 1)
 		} else {
 			notify := new(realtime.JsonRPC2BoardNotify)
+			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
 				return errors.Wrapf(err, "can not read message")
@@ -871,6 +873,7 @@ func (c *RealAPIClient) realTickerCallback(conn *websocket.Conn, calbackData int
 			atomic.StoreUint32(&rc.Subscribed, 1)
 		} else {
 			notify := new(realtime.JsonRPC2TickerNotify)
+			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
 				return errors.Wrapf(err, "can not read message")
@@ -937,6 +940,7 @@ func (c *RealAPIClient) realExecutionsCallback(conn *websocket.Conn, calbackData
 			atomic.StoreUint32(&rc.Subscribed, 1)
 		} else {
 			notify := new(realtime.JsonRPC2ExecutionsNotify)
+			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
 				return errors.Wrapf(err, "can not read message")
