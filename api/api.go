@@ -637,6 +637,7 @@ func (c *RealAPIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackD
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		err := conn.WriteJSON(d)
 		if err != nil {
+			atomic.StoreUint32(&rc.Subscribed, 0)
 			return errors.Wrapf(err, "can not write unsubscribed")
 		}
 		atomic.StoreUint32(&rc.Subscribed, 0)
@@ -652,6 +653,7 @@ func (c *RealAPIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackD
 					},
 				})
 			if err != nil {
+				atomic.StoreUint32(&rc.Subscribed, 0)
 				return errors.Wrapf(err, "can not write subscribe")
 			}
 			atomic.StoreUint32(&rc.Subscribed, 1)
@@ -660,6 +662,7 @@ func (c *RealAPIClient) RealBoardSnapshotCallback(conn *websocket.Conn, calbackD
 			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
+				atomic.StoreUint32(&rc.Subscribed, 0)
 				return errors.Wrapf(err, "can not read message")
 			}
 			rc.BoardSnapshotCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
@@ -763,6 +766,7 @@ func (c *RealAPIClient) realBoardCallback(conn *websocket.Conn, calbackData inte
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		err := conn.WriteJSON(d)
 		if err != nil {
+			atomic.StoreUint32(&rc.Subscribed, 0)
 			return errors.Wrapf(err, "can not write unsubscribed")
 		}
 		atomic.StoreUint32(&rc.Subscribed, 0)
@@ -779,6 +783,7 @@ func (c *RealAPIClient) realBoardCallback(conn *websocket.Conn, calbackData inte
 						},
 					})
 				if err != nil {
+					atomic.StoreUint32(&rc.Subscribed, 0)
 					return errors.Wrapf(err, "can not write subscribe")
 				}
 			}
@@ -799,6 +804,7 @@ func (c *RealAPIClient) realBoardCallback(conn *websocket.Conn, calbackData inte
 			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
+				atomic.StoreUint32(&rc.Subscribed, 0)
 				return errors.Wrapf(err, "can not read message")
 			}
 			if rc.Merge {
@@ -853,6 +859,7 @@ func (c *RealAPIClient) realTickerCallback(conn *websocket.Conn, calbackData int
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		err := conn.WriteJSON(d)
 		if err != nil {
+			atomic.StoreUint32(&rc.Subscribed, 0)
 			return errors.Wrapf(err, "can not write unsubscribed")
 		}
 		atomic.StoreUint32(&rc.Subscribed, 0)
@@ -868,6 +875,7 @@ func (c *RealAPIClient) realTickerCallback(conn *websocket.Conn, calbackData int
 					},
 				})
 			if err != nil {
+				atomic.StoreUint32(&rc.Subscribed, 0)
 				return errors.Wrapf(err, "can not write subscribe")
 			}
 			atomic.StoreUint32(&rc.Subscribed, 1)
@@ -876,6 +884,7 @@ func (c *RealAPIClient) realTickerCallback(conn *websocket.Conn, calbackData int
 			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
+				atomic.StoreUint32(&rc.Subscribed, 0)
 				return errors.Wrapf(err, "can not read message")
 			}
 			rc.TickerCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)
@@ -920,6 +929,7 @@ func (c *RealAPIClient) realExecutionsCallback(conn *websocket.Conn, calbackData
 		conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 		err := conn.WriteJSON(d)
 		if err != nil {
+			atomic.StoreUint32(&rc.Subscribed, 0)
 			return errors.Wrapf(err, "can not write unsubscribed")
 		}
 		atomic.StoreUint32(&rc.Subscribed, 0)
@@ -935,6 +945,7 @@ func (c *RealAPIClient) realExecutionsCallback(conn *websocket.Conn, calbackData
 					},
 				})
 			if err != nil {
+				atomic.StoreUint32(&rc.Subscribed, 0)
 				return errors.Wrapf(err, "can not write subscribe")
 			}
 			atomic.StoreUint32(&rc.Subscribed, 1)
@@ -943,6 +954,7 @@ func (c *RealAPIClient) realExecutionsCallback(conn *websocket.Conn, calbackData
 			conn.SetReadDeadline(time.Now().Add(time.Minute))
 			err := conn.ReadJSON(notify);
 			if err != nil {
+				atomic.StoreUint32(&rc.Subscribed, 0)
 				return errors.Wrapf(err, "can not read message")
 			}
 			rc.ExecutionsCallback(rc.ProductCode, notify.Params.Message, rc.CallbackData)

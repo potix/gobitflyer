@@ -124,15 +124,15 @@ func (w *WSClient) connectLoop(request *WSRequest, callback WSCallback, callback
 	for k, v := range request.Headers {
 		header.Set(k, v)
 	}
-	dialer := &websocket.Dialer{
-		Proxy:           http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{ServerName: request.parsedURL.Host},
-	}
-	if w.localAddr != nil {
-		netDialer := &net.Dialer{LocalAddr: &net.TCPAddr{IP: w.localAddr}}
-		dialer.NetDialContext = netDialer.DialContext
-	}
 	for {
+		dialer := &websocket.Dialer{
+			Proxy:           http.ProxyFromEnvironment,
+			TLSClientConfig: &tls.Config{ServerName: request.parsedURL.Host},
+		}
+		if w.localAddr != nil {
+			netDialer := &net.Dialer{LocalAddr: &net.TCPAddr{IP: w.localAddr}}
+			dialer.NetDialContext = netDialer.DialContext
+		}
 		retryable := w.connect(request, callback, callbackData, header, dialer)
 		if retryable {
 			continue
