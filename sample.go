@@ -21,7 +21,6 @@ func realtimeTickerCallback(productCode types.ProductCode, getTickerResponse *pu
 }
 
 func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *public.GetBoardResponse, callbackData interface{}) {
-/*
         log.Printf("===== board=====")
         log.Printf("Mid Price %v", getBoardResponse.MidPrice)
         log.Printf("--- asks ---")
@@ -33,7 +32,6 @@ func realtimeBoardCallback(productCode types.ProductCode, getBoardResponse *publ
 		log.Printf("%#v", getBoardResponse.Bids[i])
 	}
 	log.Printf("asks len %v, bids len %v", len(getBoardResponse.Asks), len(getBoardResponse.Bids))
-*/
 }
 
 func main() {
@@ -89,15 +87,15 @@ func main() {
         log.Printf("Volume %v Volume By Product %v", getTickerResponse.Volume, getTickerResponse.VolumeByProduct)
 
 	// realtime api
-	wsClient := client.NewWSClient(0, 0, 3, 1, nil)
-        realApiClient1 := api.NewRealAPIClient(wsClient)
+	wsClient1 := client.NewWSClient(0, 0, 3, 1, nil)
+        realApiClient1 := api.NewRealAPIClient(wsClient1)
         err = realApiClient1.RealTickerStart("BTC_JPY", realtimeTickerCallback, nil)
         if err != nil {
                 log.Printf("error: %v", err)
 		os.Exit(1)
         }
-	wsClient = client.NewWSClient(0, 0, 3, 1, nil)
-        realApiClient2 := api.NewRealAPIClient(wsClient)
+	wsClient2 := client.NewWSClient(0, 0, 3, 1, nil)
+        realApiClient2 := api.NewRealAPIClient(wsClient2)
         err = realApiClient2.RealBoardStart("BTC_JPY", realtimeBoardCallback, nil, true)
         if err != nil {
                 log.Printf("error: %v", err)
